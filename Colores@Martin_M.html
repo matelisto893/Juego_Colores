@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Juego de Colores</title>
+  <meta name="viewport" content="width=750, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #FAF0DC;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background-color: #FAF0DC;
+    }
+
+    .btn {
+      position: absolute;
+      right: 20px;
+      width: 80px;
+      height: 20px;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 12px;
+      cursor: pointer;
+      background-color: #ddd;
+    }
+
+    #btnGuia { top: 20px; }
+    #btnGuardar { top: 60px; }
+    #btnObjetivo { top: 100px; }
+    #btnAyuda { top: 140px; }
+
+    #helpBox {
+      position: absolute;
+      right: 20px;
+      bottom: 100px;
+      width: 150px;
+      background: rgba(255,255,255,0.8);
+      border: 1px solid #999;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 14px;
+      display: none;
+      white-space: pre-line;
+    }
+
+    #guideText {
+      text-align: center;
+      font-size: 16px;
+      margin-top: 8px;
+      color: #333;
+    }
+
+    /* Nueva caja de mensajes tipo ayuda/guía */
+    .mensaje {
+      position: absolute;
+      top: 100px;
+      left: 810px;
+      width: 220px;
+      background-color: rgba(255, 255, 255, 0.8);
+      border: 1px solid #999;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.4em;
+      display: none;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="750" height="500"></canvas>
+
+  <button id="btnGuia" class="btn">GUÍA</button>
+  <button id="btnGuardar" class="btn">GUARDAR</button>
+  <button id="btnObjetivo" class="btn">DESAFÍO</button>
+  <button id="btnAyuda" class="btn">AYUDA</button>
+  <div id="helpBox"></div>
+  <div id="guideText">¡Bienvenido al Juego de Colores!</div>
+  <div id="mensajeAyuda" class="mensaje"></div>
+
+  <script>
+    // Mensajes de guía para mostrar en la caja de ayuda
+    const mensajesGuia = [
+      "¡Bienvenido al Juego de Colores!",
+      "Arrastrá los colores desde los círculos de arriba al vaso mezclador.",
+      "Cuando obtengas un color favorito, puedes usar el botón GUARDAR.",
+      "Arrastrá colores favoritos al mezclador para reusarlos.",
+      "Usá el botón DESAFÍO e intenta copiar colores indicados.",
+      "Si es muy dificil, usá el botón AYUDA para ver la receta.",
+      "Podés arrastrar colores Favoritos al tacho de basura.",
+            "¡Divertite creando nuevos colores!"
+    ];
+
+    let pasoGuia = 0;
+
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const width = canvas.width, height = canvas.height;
+
+    const RADIUS = 35;
+    const FAVORITE_SLOTS = 10;
+    const COLORS = {
+      red: [255, 0, 0],
+      green: [0, 255, 0],
+      blue: [0, 0, 255],
+      white: [255, 255, 255],
+      black: [0, 0, 0]
+    };
+
+    const SECONDARY = [
+      { name: "Amarillo", rgb: [255,255,0], receta: "10 rojos + 10 verdes" },
+      { name: "Celeste", rgb: [0,255,255], receta: "10 azules + 10 verdes" },
+      { name: "Violeta", rgb: [255,0,255], receta: "10 rojos + 10 azules" },
+      { name: "Gris", rgb: [128,128,128], receta: "3 rojos + 3 verdes + 3 azules" },
+      { name: "Naranja", rgb: [255,165,0], receta: "6 rojos + 4 verdes" },
+      { name: "Rosado", rgb: [255,192,203], receta: "6 rojos + 4 blancos" },
+      { name: "Verde oscuro", rgb: [0,100,0], receta: "6 verdes + 4 negros" },
+      { name: "Azul marino", rgb: [0,0,128], receta: "7 azules + 3 negros" },
+      { name: "Marrón", rgb: [165,42,42], receta: "5 rojos + 3 verdes + 2 negros" },
+      { name: "Beige", rgb: [245,245,220], receta: "4 blancos + 2 rojos + 2 verdes + 2 azules" },
+    ];
+
+    let mezclador = { x: width / 2 - 100, y: 230, color: [0,0,0] };
+    let objetivo = null;
+    let favoritos = Array(FAVORITE_SLOTS).fill(null);
+    let dragging = null;
+    let draggingFromMixer = false;
+    const helpBox = document.getElementById("helpBox");
+
+    const circulosColor = [
+      {x: 100, y: 100, name: "red"},
+      {x: 200, y: 100, name: "green"},
+      {x: 300, y: 100, name: "blue"},
+      {x: 400, y: 100, name: "white"},
+      {x: 500, y: 100, name: "black"},
+    ];
+
+    const favoritosPos = Array.from({length: FAVORITE_SLOTS}, (_, i) => ({
+      x: 70 + i*65, y: 470
+    }));
+
+    const trash = { x: width - 50, y: height - 50 };
+
+    function drawCircle(x, y, color, label = "") {
+      ctx.beginPath();
+      ctx.arc(x, y, RADIUS, 0, Math.PI * 2);
+      ctx.fillStyle = typeof color === "string" ? color : `rgb(${color[0]},${color[1]},${color[2]})`;
+      ctx.fill();
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      if (label) {
+        ctx.fillStyle = "#000";
+        ctx.font = "12px sans-serif";
+        ctx.fillText(label, x - 20, y + RADIUS + 15);
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.fillStyle = "#B400FF";
+      ctx.font = "bold 28px sans-serif";
+      ctx.fillText("Juego de Colores", width / 2 - 100, 35);
+      ctx.font = "16px sans-serif";
+      ctx.fillText("by @Martín_M", width / 2 - 50, 55);
+
+      circulosColor.forEach(c => {
+        drawCircle(c.x, c.y, COLORS[c.name]);
+      });
+
+      drawCircle(mezclador.x, mezclador.y, mezclador.color, "Mezcla");
+
+      if (objetivo) drawCircle(mezclador.x + 220, mezclador.y, objetivo.rgb, "Desafío");
+
+      favoritos.forEach((f, i) => {
+        drawCircle(favoritosPos[i].x, favoritosPos[i].y, f || "#E6E6E6");
+      });
+
+      drawCircle(trash.x, trash.y, "#999", "🗑");
+
+      if (dragging) {
+        drawCircle(dragging.x, dragging.y, dragging.color);
+      }
+
+      if (objetivo && isSimilar(mezclador.color, objetivo.rgb)) {
+        ctx.fillStyle = "limegreen";
+        ctx.font = "bold 28px sans-serif";
+        ctx.fillText("DESAFÍO", mezclador.x + 85, mezclador.y + 75);
+        ctx.fillText("LOGRADO", mezclador.x + 75, mezclador.y + 105);
+      }
+    }
+
+    function isInside(x, y, cx, cy, r = RADIUS) {
+      return (x - cx)**2 + (y - cy)**2 <= r**2;
+    }
+
+    function isSimilar(c1, c2, tolerance = 30) {
+      return c1.every((v, i) => Math.abs(v - c2[i]) < tolerance);
+    }
+
+    canvas.addEventListener("mousedown", e => {
+      const x = e.offsetX, y = e.offsetY;
+
+      for (let c of circulosColor) {
+        if (isInside(x, y, c.x, c.y)) {
+          dragging = { color: COLORS[c.name], x, y };
+          return;
+        }
+      }
+
+      for (let i = 0; i < favoritos.length; i++) {
+        const pos = favoritosPos[i];
+        if (favoritos[i] && isInside(x, y, pos.x, pos.y)) {
+          dragging = { color: favoritos[i], x, y, favIndex: i };
+          return;
+        }
+      }
+
+      if (isInside(x, y, mezclador.x, mezclador.y)) {
+        dragging = { color: mezclador.color.slice(), x, y };
+        draggingFromMixer = true;
+        return;
+      }
+    });
+
+    canvas.addEventListener("mousemove", e => {
+      if (dragging) {
+        dragging.x = e.offsetX;
+        dragging.y = e.offsetY;
+        draw();
+      }
+    });
+
+    canvas.addEventListener("mouseup", e => {
+      if (!dragging) return;
+      const x = e.offsetX, y = e.offsetY;
+
+      if (isInside(x, y, mezclador.x, mezclador.y) && !draggingFromMixer) {
+        for (let i = 0; i < 3; i++) {
+          mezclador.color[i] = Math.min(255, mezclador.color[i] + Math.round(dragging.color[i] * 0.1));
+        }
+      } else {
+        for (let i = 0; i < favoritos.length; i++) {
+          const pos = favoritosPos[i];
+          if (!favoritos[i] && isInside(x, y, pos.x, pos.y)) {
+            favoritos[i] = dragging.color;
+            break;
+          }
+        }
+
+        if (isInside(x, y, trash.x, trash.y) && dragging.favIndex !== undefined) {
+          favoritos[dragging.favIndex] = null;
+        }
+      }
+
+      dragging = null;
+      draggingFromMixer = false;
+      draw();
+    });
+
+    canvas.addEventListener("contextmenu", e => {
+      e.preventDefault();
+      const x = e.offsetX, y = e.offsetY;
+      for (let i = 0; i < favoritos.length; i++) {
+        const pos = favoritosPos[i];
+        if (isInside(x, y, pos.x, pos.y)) {
+          favoritos[i] = null;
+          draw();
+          return;
+        }
+      }
+
+      if (isInside(x, y, mezclador.x, mezclador.y)) {
+        mezclador.color = [0,0,0];
+        draw();
+      }
+    });
+
+    document.getElementById("btnGuia").onclick = () => {
+      // Mostrar mensajes de guía en la caja de ayuda
+      const mensajeAyuda = document.getElementById("mensajeAyuda");
+      mensajeAyuda.style.display = "block";
+      mensajeAyuda.textContent = mensajesGuia[pasoGuia];
+      pasoGuia = (pasoGuia + 1) % mensajesGuia.length;
+    };
+
+    document.getElementById("btnGuardar").onclick = () => {
+      for (let i = 0; i < favoritos.length; i++) {
+        if (!favoritos[i]) {
+          favoritos[i] = mezclador.color.slice();
+          draw();
+          break;
+        }
+      }
+    };
+
+    document.getElementById("btnObjetivo").onclick = () => {
+      const r = SECONDARY[Math.floor(Math.random() * SECONDARY.length)];
+      objetivo = r;
+      helpBox.style.display = "none";
+      draw();
+    };
+
+    document.getElementById("btnAyuda").onclick = () => {
+      if (objetivo) {
+        helpBox.textContent = `${objetivo.name}:\n${objetivo.receta}`;
+        helpBox.style.display = "block";
+      }
+    };
+
+    // Ocultar mensaje de ayuda al hacer click fuera
+    document.body.addEventListener("mousedown", e => {
+      if (!e.target.classList.contains("btn") && e.target.id !== "mensajeAyuda") {
+        document.getElementById("mensajeAyuda").style.display = "none";
+      }
+    });
+
+    draw();
+  </script>
+</body>
+</html>
