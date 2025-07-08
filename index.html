@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Juego de Colores</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <style>
     * { box-sizing: border-box; }
 
@@ -11,29 +11,23 @@
       margin: 0;
       font-family: sans-serif;
       background-color: #FAF0DC;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      height: 100vh;
       overflow: hidden;
     }
 
     canvas {
-      background-color: #FAF0DC;
-      width: 100%;
-      height: auto;
-      max-width: 750px;
-      touch-action: none;
       display: block;
+      background-color: #FAF0DC;
+      touch-action: none;
     }
 
     .botonera {
+      position: fixed;
       display: flex;
       flex-direction: column;
-      position: absolute;
       top: 20px;
       right: 10px;
       gap: 10px;
+      z-index: 10;
     }
 
     .btn {
@@ -47,55 +41,40 @@
       background-color: #ddd;
     }
 
-    #guideText {
-      text-align: center;
-      font-size: 16px;
-      margin: 10px;
-      color: #333;
-    }
-
-    #helpBox {
-      position: absolute;
-      bottom: 120px;
-      right: 10px;
-      width: 180px;
-      background: rgba(255,255,255,0.85);
+    #helpBox, .mensaje {
+      position: fixed;
+      background: rgba(255, 255, 255, 0.85);
       border: 1px solid #999;
       border-radius: 10px;
       padding: 10px;
       font-size: 14px;
       display: none;
       white-space: pre-line;
+      z-index: 15;
+    }
+
+    #helpBox {
+      bottom: 100px;
+      right: 10px;
+      width: 180px;
     }
 
     .mensaje {
-      position: absolute;
       top: 100px;
-      left: calc(50% + 140px);
+      left: 50%;
+      transform: translateX(100px);
       max-width: 220px;
-      background-color: rgba(255, 255, 255, 0.8);
-      border: 1px solid #999;
-      padding: 10px;
-      border-radius: 10px;
-      font-size: 14px;
-      line-height: 1.4em;
-      display: none;
-      z-index: 10;
     }
 
     @media (max-width: 768px) {
       .botonera {
         flex-direction: row;
         flex-wrap: wrap;
-        justify-content: center;
-        top: unset;
         bottom: 10px;
+        top: unset;
+        right: unset;
         left: 50%;
         transform: translateX(-50%);
-        right: unset;
-        gap: 8px;
-        position: fixed;
-        z-index: 20;
         background-color: rgba(250,240,220,0.95);
         padding: 10px;
         border-radius: 10px;
@@ -106,50 +85,49 @@
         padding: 8px;
         font-size: 12px;
       }
-
-      .mensaje, #helpBox {
-        position: relative;
-        margin: 10px auto;
-        text-align: center;
-      }
     }
   </style>
 </head>
 <body>
-  <div id="guideText">¡Bienvenido al Juego de Colores!</div>
-  <canvas id="gameCanvas" width="750" height="500"></canvas>
-
+  <canvas id="gameCanvas"></canvas>
   <div class="botonera">
     <button id="btnGuia" class="btn">GUÍA</button>
     <button id="btnGuardar" class="btn">GUARDAR</button>
     <button id="btnObjetivo" class="btn">DESAFÍO</button>
     <button id="btnAyuda" class="btn">AYUDA</button>
   </div>
-
   <div id="helpBox"></div>
   <div id="mensajeAyuda" class="mensaje"></div>
-
   <script>
     const mensajesGuia = [
-      "¡Bienvenido al Juego de Colores!",
-      "Arrastrá los colores desde los círculos de arriba al vaso mezclador.",
-      "Cuando obtengas un color favorito, podés usar el botón GUARDAR.",
-      "Arrastrá colores favoritos al mezclador para reusarlos.",
-      "Usá el botón DESAFÍO e intentá copiar colores indicados.",
-      "Si es muy difícil, usá el botón AYUDA para ver la receta.",
-      "Podés arrastrar colores favoritos al tacho de basura.",
-      "¡Divertite creando nuevos colores!"
+      "\u00a1Bienvenido al Juego de Colores!",
+      "Arrastr\u00e1 los colores desde los c\u00edrculos de arriba al vaso mezclador.",
+      "Cuando obtengas un color favorito, pod\u00e9s usar el bot\u00f3n GUARDAR.",
+      "Arrastr\u00e1 colores favoritos al mezclador para reusarlos.",
+      "Us\u00e1 el bot\u00f3n DESAF\u00cdO e intent\u00e1 copiar colores indicados.",
+      "Si es muy dif\u00edcil, us\u00e1 el bot\u00f3n AYUDA para ver la receta.",
+      "Pod\u00e9s arrastrar colores favoritos al tacho de basura.",
+      "\u00a1Divertite creando nuevos colores!"
     ];
 
     let pasoGuia = 0;
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
-    let width = canvas.width, height = canvas.height;
 
-    const RADIUS = 35;
+    let width, height, RADIUS;
+    let mezclador, objetivo = null;
     const FAVORITE_SLOTS = 10;
+    let favoritos = Array(FAVORITE_SLOTS).fill(null);
+    let dragging = null;
+    let draggingFromMixer = false;
+    const helpBox = document.getElementById("helpBox");
+
     const COLORS = {
-      red: [255, 0, 0], green: [0, 255, 0], blue: [0, 0, 255], white: [255, 255, 255], black: [0, 0, 0]
+      red: [255, 0, 0],
+      green: [0, 255, 0],
+      blue: [0, 0, 255],
+      white: [255, 255, 255],
+      black: [0, 0, 0]
     };
 
     const SECONDARY = [
@@ -161,25 +139,44 @@
       { name: "Rosado", rgb: [255,192,203], receta: "6 rojos + 4 blancos" },
       { name: "Verde oscuro", rgb: [0,100,0], receta: "6 verdes + 4 negros" },
       { name: "Azul marino", rgb: [0,0,128], receta: "7 azules + 3 negros" },
-      { name: "Marrón", rgb: [165,42,42], receta: "5 rojos + 3 verdes + 2 negros" },
-      { name: "Beige", rgb: [245,245,220], receta: "4 blancos + 2 rojos + 2 verdes + 2 azules" }
+      { name: "Marr\u00f3n", rgb: [165,42,42], receta: "5 rojos + 3 verdes + 2 negros" },
+      { name: "Beige", rgb: [245,245,220], receta: "4 blancos + 2 rojos + 2 verdes + 2 azules" },
     ];
 
-    let mezclador = { x: width / 2 - 100, y: 230, color: [0,0,0] };
-    let objetivo = null;
-    let favoritos = Array(FAVORITE_SLOTS).fill(null);
-    let dragging = null;
-    let draggingFromMixer = false;
-    let lastTap = 0;
-    const helpBox = document.getElementById("helpBox");
+    let circulosColor = [];
+    let favoritosPos = [];
+    let trash = {};
 
-    const circulosColor = [
-      {x: 100, y: 100, name: "red"}, {x: 200, y: 100, name: "green"}, {x: 300, y: 100, name: "blue"},
-      {x: 400, y: 100, name: "white"}, {x: 500, y: 100, name: "black"}
-    ];
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      width = canvas.width;
+      height = canvas.height;
+      RADIUS = Math.min(width, height) * 0.045;
 
-    const favoritosPos = Array.from({length: FAVORITE_SLOTS}, (_, i) => ({ x: 70 + i*65, y: 470 }));
-    const trash = { x: width - 50, y: height - 50 };
+      circulosColor = [
+        { x: width * 0.1, y: height * 0.15, name: "red" },
+        { x: width * 0.25, y: height * 0.15, name: "green" },
+        { x: width * 0.4, y: height * 0.15, name: "blue" },
+        { x: width * 0.55, y: height * 0.15, name: "white" },
+        { x: width * 0.7, y: height * 0.15, name: "black" },
+      ];
+
+      mezclador = {
+        x: width * 0.3,
+        y: height * 0.45,
+        color: mezclador ? mezclador.color : [0, 0, 0]
+      };
+
+      favoritosPos = Array.from({ length: FAVORITE_SLOTS }, (_, i) => ({
+        x: width * 0.07 + i * width * 0.085,
+        y: height * 0.85
+      }));
+
+      trash = { x: width * 0.9, y: height * 0.85 };
+
+      draw();
+    }
 
     function drawCircle(x, y, color, label = "") {
       ctx.beginPath();
@@ -191,34 +188,38 @@
       ctx.stroke();
       if (label) {
         ctx.fillStyle = "#000";
-        ctx.font = "12px sans-serif";
-        ctx.fillText(label, x - 20, y + RADIUS + 15);
+        ctx.font = `${RADIUS * 0.5}px sans-serif`;
+        ctx.fillText(label, x - RADIUS, y + RADIUS + 12);
       }
     }
 
     function draw() {
       ctx.clearRect(0, 0, width, height);
       ctx.fillStyle = "#B400FF";
-      ctx.font = "bold 28px sans-serif";
-      ctx.fillText("Juego de Colores", width / 2 - 100, 35);
-      ctx.font = "16px sans-serif";
-      ctx.fillText("by @Martín_M", width / 2 - 50, 55);
+      ctx.font = `bold ${RADIUS * 1.2}px sans-serif`;
+      ctx.fillText("Juego de Colores", width * 0.3, height * 0.07);
+      ctx.font = `${RADIUS * 0.8}px sans-serif`;
+      ctx.fillText("by @Martín_M", width * 0.38, height * 0.1);
+
       circulosColor.forEach(c => drawCircle(c.x, c.y, COLORS[c.name]));
       drawCircle(mezclador.x, mezclador.y, mezclador.color, "Mezcla");
-      if (objetivo) drawCircle(mezclador.x + 220, mezclador.y, objetivo.rgb, "Desafío");
+      if (objetivo) drawCircle(mezclador.x + width * 0.35, mezclador.y, objetivo.rgb, "Desafío");
+
       favoritos.forEach((f, i) => drawCircle(favoritosPos[i].x, favoritosPos[i].y, f || "#E6E6E6"));
       drawCircle(trash.x, trash.y, "#999", "🗑");
+
       if (dragging) drawCircle(dragging.x, dragging.y, dragging.color);
+
       if (objetivo && isSimilar(mezclador.color, objetivo.rgb)) {
         ctx.fillStyle = "limegreen";
-        ctx.font = "bold 28px sans-serif";
-        ctx.fillText("DESAFÍO", mezclador.x + 85, mezclador.y + 75);
-        ctx.fillText("LOGRADO", mezclador.x + 75, mezclador.y + 105);
+        ctx.font = `bold ${RADIUS * 1.2}px sans-serif`;
+        ctx.fillText("DESAFÍO", mezclador.x + width * 0.25, mezclador.y + RADIUS * 2);
+        ctx.fillText("LOGRADO", mezclador.x + width * 0.23, mezclador.y + RADIUS * 3.2);
       }
     }
 
     function isInside(x, y, cx, cy, r = RADIUS) {
-      return (x - cx)**2 + (y - cy)**2 <= r**2;
+      return (x - cx) ** 2 + (y - cy) ** 2 <= r ** 2;
     }
 
     function isSimilar(c1, c2, tolerance = 30) {
@@ -243,15 +244,6 @@
     function handleStart(evt) {
       evt.preventDefault();
       const { x, y } = getPointerPos(evt);
-
-      // Detectar doble toque en mezclador (solo móvil)
-      const now = Date.now();
-      if (isInside(x, y, mezclador.x, mezclador.y) && now - lastTap < 400) {
-        mezclador.color = [0, 0, 0];
-        draw();
-        return;
-      }
-      lastTap = now;
 
       for (let c of circulosColor) {
         if (isInside(x, y, c.x, c.y)) {
@@ -283,7 +275,6 @@
     }
 
     function handleEnd(evt) {
-      evt.preventDefault();
       if (!dragging) return;
 
       let x, y;
@@ -307,7 +298,6 @@
             break;
           }
         }
-
         if (isInside(x, y, trash.x, trash.y) && dragging.favIndex !== undefined) {
           favoritos[dragging.favIndex] = null;
         }
@@ -318,42 +308,33 @@
       draw();
     }
 
+    let lastTap = 0;
+    canvas.addEventListener("touchstart", function(evt) {
+      const now = new Date().getTime();
+      const x = getPointerPos(evt).x;
+      const y = getPointerPos(evt).y;
+      if (now - lastTap < 300 && isInside(x, y, mezclador.x, mezclador.y)) {
+        mezclador.color = [0, 0, 0];
+        draw();
+      }
+      lastTap = now;
+    });
+
     canvas.addEventListener("mousedown", handleStart);
     canvas.addEventListener("mousemove", handleMove);
     canvas.addEventListener("mouseup", handleEnd);
     canvas.addEventListener("touchstart", handleStart, { passive: false });
     canvas.addEventListener("touchmove", handleMove);
     canvas.addEventListener("touchend", handleEnd);
-
     canvas.addEventListener("contextmenu", e => {
       e.preventDefault();
       const x = e.offsetX;
       const y = e.offsetY;
-
-      for (let i = 0; i < favoritos.length; i++) {
-        const pos = favoritosPos[i];
-        if (isInside(x, y, pos.x, pos.y)) {
-          favoritos[i] = null;
-          draw();
-          return;
-        }
-      }
-
       if (isInside(x, y, mezclador.x, mezclador.y)) {
         mezclador.color = [0, 0, 0];
         draw();
       }
     });
-
-    document.body.addEventListener("mousedown", e => {
-      if (!e.target.classList.contains("btn") && e.target.id !== "mensajeAyuda") {
-        document.getElementById("mensajeAyuda").style.display = "none";
-      }
-    });
-
-    document.body.addEventListener("touchstart", function(e) {
-      if (e.target === canvas) e.preventDefault();
-    }, { passive: false });
 
     document.getElementById("btnGuia").onclick = () => {
       const mensajeAyuda = document.getElementById("mensajeAyuda");
@@ -386,8 +367,8 @@
       }
     };
 
-    draw();
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
   </script>
 </body>
 </html>
-
