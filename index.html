@@ -14,19 +14,17 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
     }
 
     canvas {
       background-color: #FAF0DC;
-      max-width: 100%;
-      height: auto;
-      touch-action: none;
-    }
-
-    #gameCanvas {
       width: 100%;
+      height: auto;
       max-width: 750px;
+      touch-action: none;
+      display: block;
     }
 
     .botonera {
@@ -111,10 +109,6 @@
 
       .mensaje, #helpBox {
         position: relative;
-        left: unset;
-        right: unset;
-        top: unset;
-        bottom: unset;
         margin: 10px auto;
         text-align: center;
       }
@@ -148,19 +142,14 @@
     ];
 
     let pasoGuia = 0;
-
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
-    const width = canvas.width, height = canvas.height;
+    let width = canvas.width, height = canvas.height;
 
     const RADIUS = 35;
     const FAVORITE_SLOTS = 10;
     const COLORS = {
-      red: [255, 0, 0],
-      green: [0, 255, 0],
-      blue: [0, 0, 255],
-      white: [255, 255, 255],
-      black: [0, 0, 0]
+      red: [255, 0, 0], green: [0, 255, 0], blue: [0, 0, 255], white: [255, 255, 255], black: [0, 0, 0]
     };
 
     const SECONDARY = [
@@ -173,7 +162,7 @@
       { name: "Verde oscuro", rgb: [0,100,0], receta: "6 verdes + 4 negros" },
       { name: "Azul marino", rgb: [0,0,128], receta: "7 azules + 3 negros" },
       { name: "Marrón", rgb: [165,42,42], receta: "5 rojos + 3 verdes + 2 negros" },
-      { name: "Beige", rgb: [245,245,220], receta: "4 blancos + 2 rojos + 2 verdes + 2 azules" },
+      { name: "Beige", rgb: [245,245,220], receta: "4 blancos + 2 rojos + 2 verdes + 2 azules" }
     ];
 
     let mezclador = { x: width / 2 - 100, y: 230, color: [0,0,0] };
@@ -181,20 +170,15 @@
     let favoritos = Array(FAVORITE_SLOTS).fill(null);
     let dragging = null;
     let draggingFromMixer = false;
+    let lastTap = 0;
     const helpBox = document.getElementById("helpBox");
 
     const circulosColor = [
-      {x: 100, y: 100, name: "red"},
-      {x: 200, y: 100, name: "green"},
-      {x: 300, y: 100, name: "blue"},
-      {x: 400, y: 100, name: "white"},
-      {x: 500, y: 100, name: "black"},
+      {x: 100, y: 100, name: "red"}, {x: 200, y: 100, name: "green"}, {x: 300, y: 100, name: "blue"},
+      {x: 400, y: 100, name: "white"}, {x: 500, y: 100, name: "black"}
     ];
 
-    const favoritosPos = Array.from({length: FAVORITE_SLOTS}, (_, i) => ({
-      x: 70 + i*65, y: 470
-    }));
-
+    const favoritosPos = Array.from({length: FAVORITE_SLOTS}, (_, i) => ({ x: 70 + i*65, y: 470 }));
     const trash = { x: width - 50, y: height - 50 };
 
     function drawCircle(x, y, color, label = "") {
@@ -219,16 +203,12 @@
       ctx.fillText("Juego de Colores", width / 2 - 100, 35);
       ctx.font = "16px sans-serif";
       ctx.fillText("by @Martín_M", width / 2 - 50, 55);
-
       circulosColor.forEach(c => drawCircle(c.x, c.y, COLORS[c.name]));
       drawCircle(mezclador.x, mezclador.y, mezclador.color, "Mezcla");
       if (objetivo) drawCircle(mezclador.x + 220, mezclador.y, objetivo.rgb, "Desafío");
-
       favoritos.forEach((f, i) => drawCircle(favoritosPos[i].x, favoritosPos[i].y, f || "#E6E6E6"));
       drawCircle(trash.x, trash.y, "#999", "🗑");
-
       if (dragging) drawCircle(dragging.x, dragging.y, dragging.color);
-
       if (objetivo && isSimilar(mezclador.color, objetivo.rgb)) {
         ctx.fillStyle = "limegreen";
         ctx.font = "bold 28px sans-serif";
@@ -245,7 +225,6 @@
       return c1.every((v, i) => Math.abs(v - c2[i]) < tolerance);
     }
 
-    // Soporte táctil y mouse
     function getPointerPos(evt) {
       const rect = canvas.getBoundingClientRect();
       if (evt.touches) {
@@ -264,6 +243,15 @@
     function handleStart(evt) {
       evt.preventDefault();
       const { x, y } = getPointerPos(evt);
+
+      // Detectar doble toque en mezclador (solo móvil)
+      const now = Date.now();
+      if (isInside(x, y, mezclador.x, mezclador.y) && now - lastTap < 400) {
+        mezclador.color = [0, 0, 0];
+        draw();
+        return;
+      }
+      lastTap = now;
 
       for (let c of circulosColor) {
         if (isInside(x, y, c.x, c.y)) {
@@ -295,58 +283,53 @@
     }
 
     function handleEnd(evt) {
-  evt.preventDefault();
-  if (!dragging) return;
+      evt.preventDefault();
+      if (!dragging) return;
 
-  let x, y;
-  if (evt.changedTouches) {
-    const rect = canvas.getBoundingClientRect();
-    x = evt.changedTouches[0].clientX - rect.left;
-    y = evt.changedTouches[0].clientY - rect.top;
-  } else {
-    ({ x, y } = getPointerPos(evt));
-  }
-
-  if (isInside(x, y, mezclador.x, mezclador.y) && !draggingFromMixer) {
-    for (let i = 0; i < 3; i++) {
-      mezclador.color[i] = Math.min(255, mezclador.color[i] + Math.round(dragging.color[i] * 0.1));
-    }
-  } else {
-    for (let i = 0; i < favoritos.length; i++) {
-      const pos = favoritosPos[i];
-      if (!favoritos[i] && isInside(x, y, pos.x, pos.y)) {
-        favoritos[i] = dragging.color;
-        break;
+      let x, y;
+      if (evt.changedTouches) {
+        const rect = canvas.getBoundingClientRect();
+        x = evt.changedTouches[0].clientX - rect.left;
+        y = evt.changedTouches[0].clientY - rect.top;
+      } else {
+        ({ x, y } = getPointerPos(evt));
       }
+
+      if (isInside(x, y, mezclador.x, mezclador.y) && !draggingFromMixer) {
+        for (let i = 0; i < 3; i++) {
+          mezclador.color[i] = Math.min(255, mezclador.color[i] + Math.round(dragging.color[i] * 0.1));
+        }
+      } else {
+        for (let i = 0; i < favoritos.length; i++) {
+          const pos = favoritosPos[i];
+          if (!favoritos[i] && isInside(x, y, pos.x, pos.y)) {
+            favoritos[i] = dragging.color;
+            break;
+          }
+        }
+
+        if (isInside(x, y, trash.x, trash.y) && dragging.favIndex !== undefined) {
+          favoritos[dragging.favIndex] = null;
+        }
+      }
+
+      dragging = null;
+      draggingFromMixer = false;
+      draw();
     }
 
-    if (isInside(x, y, trash.x, trash.y) && dragging.favIndex !== undefined) {
-      favoritos[dragging.favIndex] = null;
-    }
-  }
-
-  dragging = null;
-  draggingFromMixer = false;
-  document.body.addEventListener("touchstart", function(e) {
-  if (e.target === canvas) e.preventDefault();
-}, { passive: false });
-  draw();
-}
-
-    // Eventos mouse
     canvas.addEventListener("mousedown", handleStart);
     canvas.addEventListener("mousemove", handleMove);
     canvas.addEventListener("mouseup", handleEnd);
-
-    // Eventos touch
     canvas.addEventListener("touchstart", handleStart, { passive: false });
     canvas.addEventListener("touchmove", handleMove);
     canvas.addEventListener("touchend", handleEnd);
+
     canvas.addEventListener("contextmenu", e => {
       e.preventDefault();
       const x = e.offsetX;
       const y = e.offsetY;
-    
+
       for (let i = 0; i < favoritos.length; i++) {
         const pos = favoritosPos[i];
         if (isInside(x, y, pos.x, pos.y)) {
@@ -355,13 +338,23 @@
           return;
         }
       }
-    
+
       if (isInside(x, y, mezclador.x, mezclador.y)) {
         mezclador.color = [0, 0, 0];
         draw();
       }
     });
-    // Otros botones
+
+    document.body.addEventListener("mousedown", e => {
+      if (!e.target.classList.contains("btn") && e.target.id !== "mensajeAyuda") {
+        document.getElementById("mensajeAyuda").style.display = "none";
+      }
+    });
+
+    document.body.addEventListener("touchstart", function(e) {
+      if (e.target === canvas) e.preventDefault();
+    }, { passive: false });
+
     document.getElementById("btnGuia").onclick = () => {
       const mensajeAyuda = document.getElementById("mensajeAyuda");
       mensajeAyuda.style.display = "block";
@@ -392,17 +385,6 @@
         helpBox.style.display = "block";
       }
     };
-
-    document.body.addEventListener("mousedown", e => {
-      if (!e.target.classList.contains("btn") && e.target.id !== "mensajeAyuda") {
-        document.getElementById("mensajeAyuda").style.display = "none";
-      }
-    });
-
-    // ✅ Evitar scroll táctil en celulares al tocar el canvas
-    document.body.addEventListener("touchstart", function(e) {
-      if (e.target === canvas) e.preventDefault();
-    }, { passive: false });
 
     draw();
   </script>
