@@ -399,6 +399,11 @@
       }
     });
 
+    // ✅ Evitar scroll táctil en celulares al tocar el canvas
+    document.body.addEventListener("touchstart", function(e) {
+      if (e.target === canvas) e.preventDefault();
+    }, { passive: false });
+
     draw();
   </script>
 </body>
