@@ -245,78 +245,91 @@
       return c1.every((v, i) => Math.abs(v - c2[i]) < tolerance);
     }
 
-    canvas.addEventListener("mousedown", e => {
-      const x = e.offsetX, y = e.offsetY;
-      for (let c of circulosColor) {
-        if (isInside(x, y, c.x, c.y)) {
-          dragging = { color: COLORS[c.name], x, y };
-          return;
-        }
-      }
-      for (let i = 0; i < favoritos.length; i++) {
-        const pos = favoritosPos[i];
-        if (favoritos[i] && isInside(x, y, pos.x, pos.y)) {
-          dragging = { color: favoritos[i], x, y, favIndex: i };
-          return;
-        }
-      }
-      if (isInside(x, y, mezclador.x, mezclador.y)) {
-        dragging = { color: mezclador.color.slice(), x, y };
-        draggingFromMixer = true;
-      }
-    });
+// Soporte para mouse y táctil
+function getPointerPos(evt) {
+  const rect = canvas.getBoundingClientRect();
+  if (evt.touches) {
+    return {
+      x: evt.touches[0].clientX - rect.left,
+      y: evt.touches[0].clientY - rect.top
+    };
+  } else {
+    return {
+      x: evt.offsetX,
+      y: evt.offsetY
+    };
+  }
+}
 
-    canvas.addEventListener("mousemove", e => {
-      if (dragging) {
-        dragging.x = e.offsetX;
-        dragging.y = e.offsetY;
-        draw();
+function handleStart(evt) {
+  evt.preventDefault();
+  const { x, y } = getPointerPos(evt);
+
+  for (let c of circulosColor) {
+    if (isInside(x, y, c.x, c.y)) {
+      dragging = { color: COLORS[c.name], x, y };
+      return;
+    }
+  }
+
+  for (let i = 0; i < favoritos.length; i++) {
+    const pos = favoritosPos[i];
+    if (favoritos[i] && isInside(x, y, pos.x, pos.y)) {
+      dragging = { color: favoritos[i], x, y, favIndex: i };
+      return;
+    }
+  }
+
+  if (isInside(x, y, mezclador.x, mezclador.y)) {
+    dragging = { color: mezclador.color.slice(), x, y };
+    draggingFromMixer = true;
+  }
+}
+
+function handleMove(evt) {
+  if (!dragging) return;
+  const { x, y } = getPointerPos(evt);
+  dragging.x = x;
+  dragging.y = y;
+  draw();
+}
+
+function handleEnd(evt) {
+  if (!dragging) return;
+  const { x, y } = getPointerPos(evt);
+
+  if (isInside(x, y, mezclador.x, mezclador.y) && !draggingFromMixer) {
+    for (let i = 0; i < 3; i++) {
+      mezclador.color[i] = Math.min(255, mezclador.color[i] + Math.round(dragging.color[i] * 0.1));
+    }
+  } else {
+    for (let i = 0; i < favoritos.length; i++) {
+      const pos = favoritosPos[i];
+      if (!favoritos[i] && isInside(x, y, pos.x, pos.y)) {
+        favoritos[i] = dragging.color;
+        break;
       }
-    });
+    }
 
-    canvas.addEventListener("mouseup", e => {
-      if (!dragging) return;
-      const x = e.offsetX, y = e.offsetY;
+    if (isInside(x, y, trash.x, trash.y) && dragging.favIndex !== undefined) {
+      favoritos[dragging.favIndex] = null;
+    }
+  }
 
-      if (isInside(x, y, mezclador.x, mezclador.y) && !draggingFromMixer) {
-        for (let i = 0; i < 3; i++) {
-          mezclador.color[i] = Math.min(255, mezclador.color[i] + Math.round(dragging.color[i] * 0.1));
-        }
-      } else {
-        for (let i = 0; i < favoritos.length; i++) {
-          const pos = favoritosPos[i];
-          if (!favoritos[i] && isInside(x, y, pos.x, pos.y)) {
-            favoritos[i] = dragging.color;
-            break;
-          }
-        }
-        if (isInside(x, y, trash.x, trash.y) && dragging.favIndex !== undefined) {
-          favoritos[dragging.favIndex] = null;
-        }
-      }
+  dragging = null;
+  draggingFromMixer = false;
+  draw();
+}
 
-      dragging = null;
-      draggingFromMixer = false;
-      draw();
-    });
+// Eventos mouse
+canvas.addEventListener("mousedown", handleStart);
+canvas.addEventListener("mousemove", handleMove);
+canvas.addEventListener("mouseup", handleEnd);
 
-    canvas.addEventListener("contextmenu", e => {
-      e.preventDefault();
-      const x = e.offsetX, y = e.offsetY;
-
-      for (let i = 0; i < favoritos.length; i++) {
-        const pos = favoritosPos[i];
-        if (isInside(x, y, pos.x, pos.y)) {
-          favoritos[i] = null;
-          draw();
-          return;
-        }
-      }
-
-      if (isInside(x, y, mezclador.x, mezclador.y)) {
-        mezclador.color = [0,0,0];
-        draw();
-      }
+// Eventos touch
+canvas.addEventListener("touchstart", handleStart);
+canvas.addEventListener("touchmove", handleMove);
+canvas.addEventListener("touchend", handleEnd);
     });
 
     document.getElementById("btnGuia").onclick = () => {
