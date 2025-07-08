@@ -295,31 +295,39 @@
     }
 
     function handleEnd(evt) {
-      if (!dragging) return;
-      const { x, y } = getPointerPos(evt);
+  if (!dragging) return;
 
-      if (isInside(x, y, mezclador.x, mezclador.y) && !draggingFromMixer) {
-        for (let i = 0; i < 3; i++) {
-          mezclador.color[i] = Math.min(255, mezclador.color[i] + Math.round(dragging.color[i] * 0.1));
-        }
-      } else {
-        for (let i = 0; i < favoritos.length; i++) {
-          const pos = favoritosPos[i];
-          if (!favoritos[i] && isInside(x, y, pos.x, pos.y)) {
-            favoritos[i] = dragging.color;
-            break;
-          }
-        }
+  let x, y;
+  if (evt.changedTouches) {
+    const rect = canvas.getBoundingClientRect();
+    x = evt.changedTouches[0].clientX - rect.left;
+    y = evt.changedTouches[0].clientY - rect.top;
+  } else {
+    ({ x, y } = getPointerPos(evt));
+  }
 
-        if (isInside(x, y, trash.x, trash.y) && dragging.favIndex !== undefined) {
-          favoritos[dragging.favIndex] = null;
-        }
-      }
-
-      dragging = null;
-      draggingFromMixer = false;
-      draw();
+  if (isInside(x, y, mezclador.x, mezclador.y) && !draggingFromMixer) {
+    for (let i = 0; i < 3; i++) {
+      mezclador.color[i] = Math.min(255, mezclador.color[i] + Math.round(dragging.color[i] * 0.1));
     }
+  } else {
+    for (let i = 0; i < favoritos.length; i++) {
+      const pos = favoritosPos[i];
+      if (!favoritos[i] && isInside(x, y, pos.x, pos.y)) {
+        favoritos[i] = dragging.color;
+        break;
+      }
+    }
+
+    if (isInside(x, y, trash.x, trash.y) && dragging.favIndex !== undefined) {
+      favoritos[dragging.favIndex] = null;
+    }
+  }
+
+  dragging = null;
+  draggingFromMixer = false;
+  draw();
+}
 
     // Eventos mouse
     canvas.addEventListener("mousedown", handleStart);
@@ -330,7 +338,25 @@
     canvas.addEventListener("touchstart", handleStart, { passive: false });
     canvas.addEventListener("touchmove", handleMove);
     canvas.addEventListener("touchend", handleEnd);
-
+    canvas.addEventListener("contextmenu", e => {
+      e.preventDefault();
+      const x = e.offsetX;
+      const y = e.offsetY;
+    
+      for (let i = 0; i < favoritos.length; i++) {
+        const pos = favoritosPos[i];
+        if (isInside(x, y, pos.x, pos.y)) {
+          favoritos[i] = null;
+          draw();
+          return;
+        }
+      }
+    
+      if (isInside(x, y, mezclador.x, mezclador.y)) {
+        mezclador.color = [0, 0, 0];
+        draw();
+      }
+    });
     // Otros botones
     document.getElementById("btnGuia").onclick = () => {
       const mensajeAyuda = document.getElementById("mensajeAyuda");
