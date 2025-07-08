@@ -5,9 +5,7 @@
   <title>Juego de Colores</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -136,104 +134,17 @@
 
   <div id="helpBox"></div>
   <div id="mensajeAyuda" class="mensaje"></div>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Juego de Colores</title>
-  <meta name="viewport" content="width=750, initial-scale=1.0" />
-  <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background-color: #FAF0DC;
-      overflow: hidden;
-    }
-
-    canvas {
-      display: block;
-      margin: 0 auto;
-      background-color: #FAF0DC;
-    }
-
-    .btn {
-      position: absolute;
-      right: 20px;
-      width: 80px;
-      height: 20px;
-      padding: 5px 10px;
-      border: none;
-      border-radius: 20px;
-      font-weight: bold;
-      font-size: 12px;
-      cursor: pointer;
-      background-color: #ddd;
-    }
-
-    #btnGuia { top: 20px; }
-    #btnGuardar { top: 60px; }
-    #btnObjetivo { top: 100px; }
-    #btnAyuda { top: 140px; }
-
-    #helpBox {
-      position: absolute;
-      right: 20px;
-      bottom: 100px;
-      width: 150px;
-      background: rgba(255,255,255,0.8);
-      border: 1px solid #999;
-      border-radius: 10px;
-      padding: 10px;
-      font-size: 14px;
-      display: none;
-      white-space: pre-line;
-    }
-
-    #guideText {
-      text-align: center;
-      font-size: 16px;
-      margin-top: 8px;
-      color: #333;
-    }
-
-    /* Nueva caja de mensajes tipo ayuda/guía */
-    .mensaje {
-      position: absolute;
-      top: 100px;
-      left: 810px;
-      width: 220px;
-      background-color: rgba(255, 255, 255, 0.8);
-      border: 1px solid #999;
-      padding: 10px;
-      border-radius: 10px;
-      font-size: 14px;
-      line-height: 1.4em;
-      display: none;
-      z-index: 10;
-    }
-  </style>
-</head>
-<body>
-  <canvas id="gameCanvas" width="750" height="500"></canvas>
-
-  <button id="btnGuia" class="btn">GUÍA</button>
-  <button id="btnGuardar" class="btn">GUARDAR</button>
-  <button id="btnObjetivo" class="btn">DESAFÍO</button>
-  <button id="btnAyuda" class="btn">AYUDA</button>
-  <div id="helpBox"></div>
-  <div id="guideText">¡Bienvenido al Juego de Colores!</div>
-  <div id="mensajeAyuda" class="mensaje"></div>
 
   <script>
-    // Mensajes de guía para mostrar en la caja de ayuda
     const mensajesGuia = [
       "¡Bienvenido al Juego de Colores!",
       "Arrastrá los colores desde los círculos de arriba al vaso mezclador.",
       "Cuando obtengas un color favorito, puedes usar el botón GUARDAR.",
       "Arrastrá colores favoritos al mezclador para reusarlos.",
       "Usá el botón DESAFÍO e intenta copiar colores indicados.",
-      "Si es muy dificil, usá el botón AYUDA para ver la receta.",
-      "Podés arrastrar colores Favoritos al tacho de basura.",
-            "¡Divertite creando nuevos colores!"
+      "Si es muy difícil, usá el botón AYUDA para ver la receta.",
+      "Podés arrastrar colores favoritos al tacho de basura.",
+      "¡Divertite creando nuevos colores!"
     ];
 
     let pasoGuia = 0;
@@ -303,30 +214,20 @@
 
     function draw() {
       ctx.clearRect(0, 0, width, height);
-
       ctx.fillStyle = "#B400FF";
       ctx.font = "bold 28px sans-serif";
       ctx.fillText("Juego de Colores", width / 2 - 100, 35);
       ctx.font = "16px sans-serif";
       ctx.fillText("by @Martín_M", width / 2 - 50, 55);
 
-      circulosColor.forEach(c => {
-        drawCircle(c.x, c.y, COLORS[c.name]);
-      });
-
+      circulosColor.forEach(c => drawCircle(c.x, c.y, COLORS[c.name]));
       drawCircle(mezclador.x, mezclador.y, mezclador.color, "Mezcla");
-
       if (objetivo) drawCircle(mezclador.x + 220, mezclador.y, objetivo.rgb, "Desafío");
 
-      favoritos.forEach((f, i) => {
-        drawCircle(favoritosPos[i].x, favoritosPos[i].y, f || "#E6E6E6");
-      });
-
+      favoritos.forEach((f, i) => drawCircle(favoritosPos[i].x, favoritosPos[i].y, f || "#E6E6E6"));
       drawCircle(trash.x, trash.y, "#999", "🗑");
 
-      if (dragging) {
-        drawCircle(dragging.x, dragging.y, dragging.color);
-      }
+      if (dragging) drawCircle(dragging.x, dragging.y, dragging.color);
 
       if (objetivo && isSimilar(mezclador.color, objetivo.rgb)) {
         ctx.fillStyle = "limegreen";
@@ -346,14 +247,12 @@
 
     canvas.addEventListener("mousedown", e => {
       const x = e.offsetX, y = e.offsetY;
-
       for (let c of circulosColor) {
         if (isInside(x, y, c.x, c.y)) {
           dragging = { color: COLORS[c.name], x, y };
           return;
         }
       }
-
       for (let i = 0; i < favoritos.length; i++) {
         const pos = favoritosPos[i];
         if (favoritos[i] && isInside(x, y, pos.x, pos.y)) {
@@ -361,11 +260,9 @@
           return;
         }
       }
-
       if (isInside(x, y, mezclador.x, mezclador.y)) {
         dragging = { color: mezclador.color.slice(), x, y };
         draggingFromMixer = true;
-        return;
       }
     });
 
@@ -393,7 +290,6 @@
             break;
           }
         }
-
         if (isInside(x, y, trash.x, trash.y) && dragging.favIndex !== undefined) {
           favoritos[dragging.favIndex] = null;
         }
@@ -407,6 +303,7 @@
     canvas.addEventListener("contextmenu", e => {
       e.preventDefault();
       const x = e.offsetX, y = e.offsetY;
+
       for (let i = 0; i < favoritos.length; i++) {
         const pos = favoritosPos[i];
         if (isInside(x, y, pos.x, pos.y)) {
@@ -423,7 +320,6 @@
     });
 
     document.getElementById("btnGuia").onclick = () => {
-      // Mostrar mensajes de guía en la caja de ayuda
       const mensajeAyuda = document.getElementById("mensajeAyuda");
       mensajeAyuda.style.display = "block";
       mensajeAyuda.textContent = mensajesGuia[pasoGuia];
@@ -454,7 +350,6 @@
       }
     };
 
-    // Ocultar mensaje de ayuda al hacer click fuera
     document.body.addEventListener("mousedown", e => {
       if (!e.target.classList.contains("btn") && e.target.id !== "mensajeAyuda") {
         document.getElementById("mensajeAyuda").style.display = "none";
