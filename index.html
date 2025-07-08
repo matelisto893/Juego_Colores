@@ -139,9 +139,9 @@
     const mensajesGuia = [
       "¡Bienvenido al Juego de Colores!",
       "Arrastrá los colores desde los círculos de arriba al vaso mezclador.",
-      "Cuando obtengas un color favorito, puedes usar el botón GUARDAR.",
+      "Cuando obtengas un color favorito, podés usar el botón GUARDAR.",
       "Arrastrá colores favoritos al mezclador para reusarlos.",
-      "Usá el botón DESAFÍO e intenta copiar colores indicados.",
+      "Usá el botón DESAFÍO e intentá copiar colores indicados.",
       "Si es muy difícil, usá el botón AYUDA para ver la receta.",
       "Podés arrastrar colores favoritos al tacho de basura.",
       "¡Divertite creando nuevos colores!"
@@ -245,93 +245,93 @@
       return c1.every((v, i) => Math.abs(v - c2[i]) < tolerance);
     }
 
-// Soporte para mouse y táctil
-function getPointerPos(evt) {
-  const rect = canvas.getBoundingClientRect();
-  if (evt.touches) {
-    return {
-      x: evt.touches[0].clientX - rect.left,
-      y: evt.touches[0].clientY - rect.top
-    };
-  } else {
-    return {
-      x: evt.offsetX,
-      y: evt.offsetY
-    };
-  }
-}
-
-function handleStart(evt) {
-  evt.preventDefault();
-  const { x, y } = getPointerPos(evt);
-
-  for (let c of circulosColor) {
-    if (isInside(x, y, c.x, c.y)) {
-      dragging = { color: COLORS[c.name], x, y };
-      return;
-    }
-  }
-
-  for (let i = 0; i < favoritos.length; i++) {
-    const pos = favoritosPos[i];
-    if (favoritos[i] && isInside(x, y, pos.x, pos.y)) {
-      dragging = { color: favoritos[i], x, y, favIndex: i };
-      return;
-    }
-  }
-
-  if (isInside(x, y, mezclador.x, mezclador.y)) {
-    dragging = { color: mezclador.color.slice(), x, y };
-    draggingFromMixer = true;
-  }
-}
-
-function handleMove(evt) {
-  if (!dragging) return;
-  const { x, y } = getPointerPos(evt);
-  dragging.x = x;
-  dragging.y = y;
-  draw();
-}
-
-function handleEnd(evt) {
-  if (!dragging) return;
-  const { x, y } = getPointerPos(evt);
-
-  if (isInside(x, y, mezclador.x, mezclador.y) && !draggingFromMixer) {
-    for (let i = 0; i < 3; i++) {
-      mezclador.color[i] = Math.min(255, mezclador.color[i] + Math.round(dragging.color[i] * 0.1));
-    }
-  } else {
-    for (let i = 0; i < favoritos.length; i++) {
-      const pos = favoritosPos[i];
-      if (!favoritos[i] && isInside(x, y, pos.x, pos.y)) {
-        favoritos[i] = dragging.color;
-        break;
+    // Soporte táctil y mouse
+    function getPointerPos(evt) {
+      const rect = canvas.getBoundingClientRect();
+      if (evt.touches) {
+        return {
+          x: evt.touches[0].clientX - rect.left,
+          y: evt.touches[0].clientY - rect.top
+        };
+      } else {
+        return {
+          x: evt.offsetX,
+          y: evt.offsetY
+        };
       }
     }
 
-    if (isInside(x, y, trash.x, trash.y) && dragging.favIndex !== undefined) {
-      favoritos[dragging.favIndex] = null;
+    function handleStart(evt) {
+      evt.preventDefault();
+      const { x, y } = getPointerPos(evt);
+
+      for (let c of circulosColor) {
+        if (isInside(x, y, c.x, c.y)) {
+          dragging = { color: COLORS[c.name], x, y };
+          return;
+        }
+      }
+
+      for (let i = 0; i < favoritos.length; i++) {
+        const pos = favoritosPos[i];
+        if (favoritos[i] && isInside(x, y, pos.x, pos.y)) {
+          dragging = { color: favoritos[i], x, y, favIndex: i };
+          return;
+        }
+      }
+
+      if (isInside(x, y, mezclador.x, mezclador.y)) {
+        dragging = { color: mezclador.color.slice(), x, y };
+        draggingFromMixer = true;
+      }
     }
-  }
 
-  dragging = null;
-  draggingFromMixer = false;
-  draw();
-}
+    function handleMove(evt) {
+      if (!dragging) return;
+      const { x, y } = getPointerPos(evt);
+      dragging.x = x;
+      dragging.y = y;
+      draw();
+    }
 
-// Eventos mouse
-canvas.addEventListener("mousedown", handleStart);
-canvas.addEventListener("mousemove", handleMove);
-canvas.addEventListener("mouseup", handleEnd);
+    function handleEnd(evt) {
+      if (!dragging) return;
+      const { x, y } = getPointerPos(evt);
 
-// Eventos touch
-canvas.addEventListener("touchstart", handleStart);
-canvas.addEventListener("touchmove", handleMove);
-canvas.addEventListener("touchend", handleEnd);
-    });
+      if (isInside(x, y, mezclador.x, mezclador.y) && !draggingFromMixer) {
+        for (let i = 0; i < 3; i++) {
+          mezclador.color[i] = Math.min(255, mezclador.color[i] + Math.round(dragging.color[i] * 0.1));
+        }
+      } else {
+        for (let i = 0; i < favoritos.length; i++) {
+          const pos = favoritosPos[i];
+          if (!favoritos[i] && isInside(x, y, pos.x, pos.y)) {
+            favoritos[i] = dragging.color;
+            break;
+          }
+        }
 
+        if (isInside(x, y, trash.x, trash.y) && dragging.favIndex !== undefined) {
+          favoritos[dragging.favIndex] = null;
+        }
+      }
+
+      dragging = null;
+      draggingFromMixer = false;
+      draw();
+    }
+
+    // Eventos mouse
+    canvas.addEventListener("mousedown", handleStart);
+    canvas.addEventListener("mousemove", handleMove);
+    canvas.addEventListener("mouseup", handleEnd);
+
+    // Eventos touch
+    canvas.addEventListener("touchstart", handleStart, { passive: false });
+    canvas.addEventListener("touchmove", handleMove);
+    canvas.addEventListener("touchend", handleEnd);
+
+    // Otros botones
     document.getElementById("btnGuia").onclick = () => {
       const mensajeAyuda = document.getElementById("mensajeAyuda");
       mensajeAyuda.style.display = "block";
