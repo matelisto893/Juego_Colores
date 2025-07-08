@@ -26,7 +26,7 @@
       flex-direction: row;
       justify-content: center;
       flex-wrap: wrap;
-      top: 100px;
+      top: 55px;
       left: 50%;
       transform: translateX(-50%);
       gap: 10px;
@@ -88,17 +88,17 @@
   <div id="helpBox"></div>
   <div id="mensajeAyuda" class="mensaje"></div>
   <script>
-    const FAVORITE_SLOTS = 6; // reducido
-    const RADIUS_RATIO = 0.055; // agrandado 10-20%
+    const FAVORITE_SLOTS = 6;
+    const RADIUS_RATIO = 0.055;
     const mensajesGuia = [
-      "\u00a1Bienvenido al Juego de Colores!",
-      "Arrastr\u00e1 los colores desde los c\u00edrculos de arriba al vaso mezclador.",
-      "Cuando obtengas un color favorito, pod\u00e9s usar el bot\u00f3n GUARDAR.",
-      "Arrastr\u00e1 colores favoritos al mezclador para reusarlos.",
-      "Us\u00e1 el bot\u00f3n DESAF\u00cdO e intent\u00e1 copiar colores indicados.",
-      "Si es muy dif\u00edcil, us\u00e1 el bot\u00f3n AYUDA para ver la receta.",
-      "Pod\u00e9s arrastrar colores favoritos al tacho de basura.",
-      "\u00a1Divertite creando nuevos colores!"
+      "¡Bienvenido al Juego de Colores!",
+      "Arrastrá los colores desde los círculos de arriba al vaso mezclador.",
+      "Cuando obtengas un color favorito, podés usar el botón GUARDAR.",
+      "Arrastrá colores favoritos al mezclador para reusarlos.",
+      "Usá el botón DESAFÍO e intentá copiar colores indicados.",
+      "Si es muy difícil, usá el botón AYUDA para ver la receta.",
+      "Podés arrastrar colores favoritos al tacho de basura.",
+      "¡Divertite creando nuevos colores!"
     ];
 
     let pasoGuia = 0;
@@ -129,15 +129,15 @@
       { name: "Rosado", rgb: [255,192,203], receta: "6 rojos + 4 blancos" },
       { name: "Verde oscuro", rgb: [0,100,0], receta: "6 verdes + 4 negros" },
       { name: "Azul marino", rgb: [0,0,128], receta: "7 azules + 3 negros" },
-      { name: "Marr\u00f3n", rgb: [165,42,42], receta: "5 rojos + 3 verdes + 2 negros" },
-      { name: "Beige", rgb: [245,245,220], receta: "4 blancos + 2 rojos + 2 verdes + 2 azules" },
+      { name: "Marrón", rgb: [165,42,42], receta: "5 rojos + 3 verdes + 2 negros" },
+      { name: "Beige", rgb: [245,245,220], receta: "4 blancos + 2 rojos + 2 verdes + 2 azules" }
     ];
 
     let circulosColor = [];
     let favoritosPos = [];
     let trash = {};
 
-        function resizeCanvas() {
+    function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       width = canvas.width;
@@ -145,11 +145,11 @@
       RADIUS = Math.min(width, height) * RADIUS_RATIO;
 
       circulosColor = [
-        { x: width * 0.15, y: height * 0.23, name: "red" },
-        { x: width * 0.32, y: height * 0.23, name: "green" },
-        { x: width * 0.49, y: height * 0.23, name: "blue" },
-        { x: width * 0.66, y: height * 0.23, name: "white" },
-        { x: width * 0.83, y: height * 0.23, name: "black" },
+        { x: width * 0.15, y: height * 0.35, name: "red" },
+        { x: width * 0.32, y: height * 0.35, name: "green" },
+        { x: width * 0.49, y: height * 0.35, name: "blue" },
+        { x: width * 0.66, y: height * 0.35, name: "white" },
+        { x: width * 0.83, y: height * 0.35, name: "black" },
       ];
 
       mezclador = {
@@ -166,7 +166,7 @@
       trash = { x: width * 0.9, y: height * 0.9 };
       draw();
     }
- 
+
     function drawCircle(x, y, color, label = "") {
       ctx.beginPath();
       ctx.arc(x, y, RADIUS, 0, Math.PI * 2);
@@ -186,9 +186,7 @@
       ctx.clearRect(0, 0, width, height);
       ctx.fillStyle = "#B400FF";
       ctx.font = `bold ${RADIUS * 1.2}px sans-serif`;
-      ctx.fillText("Juego de Colores", width * 0.3, height * 0.07);
-      ctx.font = `${RADIUS * 0.8}px sans-serif`;
-      ctx.fillText("by @Martín_M", width * 0.38, height * 0.1);
+      ctx.fillText("Juego de Colores - by @Martín_M", width * 0.2, height * 0.05);
 
       circulosColor.forEach(c => drawCircle(c.x, c.y, COLORS[c.name]));
       drawCircle(mezclador.x, mezclador.y, mezclador.color, "Mezcla");
@@ -202,11 +200,10 @@
       if (objetivo && isSimilar(mezclador.color, objetivo.rgb)) {
         ctx.fillStyle = "limegreen";
         ctx.font = `bold ${RADIUS * 1.2}px sans-serif`;
-        ctx.fillText("DESAFÍO", mezclador.x + width * 0.25, mezclador.y + RADIUS * 2);
-        ctx.fillText("LOGRADO", mezclador.x + width * 0.23, mezclador.y + RADIUS * 3.2);
+        ctx.fillText("¡DESAFÍO LOGRADO!", width * 0.25, height * 0.62);
       }
     }
-
+    
     function isInside(x, y, cx, cy, r = RADIUS) {
       return (x - cx) ** 2 + (y - cy) ** 2 <= r ** 2;
     }
