@@ -1,6 +1,143 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <meta charset="UTF-8" />
+  <title>Juego de Colores</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #FAF0DC;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    canvas {
+      background-color: #FAF0DC;
+      max-width: 100%;
+      height: auto;
+      touch-action: none;
+    }
+
+    #gameCanvas {
+      width: 100%;
+      max-width: 750px;
+    }
+
+    .botonera {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      top: 20px;
+      right: 10px;
+      gap: 10px;
+    }
+
+    .btn {
+      width: 100px;
+      padding: 10px;
+      font-size: 14px;
+      border: none;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      background-color: #ddd;
+    }
+
+    #guideText {
+      text-align: center;
+      font-size: 16px;
+      margin: 10px;
+      color: #333;
+    }
+
+    #helpBox {
+      position: absolute;
+      bottom: 120px;
+      right: 10px;
+      width: 180px;
+      background: rgba(255,255,255,0.85);
+      border: 1px solid #999;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 14px;
+      display: none;
+      white-space: pre-line;
+    }
+
+    .mensaje {
+      position: absolute;
+      top: 100px;
+      left: calc(50% + 140px);
+      max-width: 220px;
+      background-color: rgba(255, 255, 255, 0.8);
+      border: 1px solid #999;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.4em;
+      display: none;
+      z-index: 10;
+    }
+
+    @media (max-width: 768px) {
+      .botonera {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        top: unset;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        right: unset;
+        gap: 8px;
+        position: fixed;
+        z-index: 20;
+        background-color: rgba(250,240,220,0.95);
+        padding: 10px;
+        border-radius: 10px;
+      }
+
+      .btn {
+        width: 80px;
+        padding: 8px;
+        font-size: 12px;
+      }
+
+      .mensaje, #helpBox {
+        position: relative;
+        left: unset;
+        right: unset;
+        top: unset;
+        bottom: unset;
+        margin: 10px auto;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="guideText">¡Bienvenido al Juego de Colores!</div>
+  <canvas id="gameCanvas" width="750" height="500"></canvas>
+
+  <div class="botonera">
+    <button id="btnGuia" class="btn">GUÍA</button>
+    <button id="btnGuardar" class="btn">GUARDAR</button>
+    <button id="btnObjetivo" class="btn">DESAFÍO</button>
+    <button id="btnAyuda" class="btn">AYUDA</button>
+  </div>
+
+  <div id="helpBox"></div>
+  <div id="mensajeAyuda" class="mensaje"></div>
+<html lang="es">
+<head>
   <meta charset="UTF-8">
   <title>Juego de Colores</title>
   <meta name="viewport" content="width=750, initial-scale=1.0" />
