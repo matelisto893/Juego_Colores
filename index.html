@@ -23,17 +23,23 @@
     .botonera {
       position: fixed;
       display: flex;
-      flex-direction: column;
-      top: 20px;
-      right: 10px;
+      flex-direction: row;
+      justify-content: center;
+      flex-wrap: wrap;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%);
       gap: 10px;
       z-index: 10;
+      background-color: rgba(250,240,220,0.95);
+      padding: 10px;
+      border-radius: 10px;
     }
 
     .btn {
-      width: 100px;
-      padding: 10px;
-      font-size: 14px;
+      width: 90px;
+      padding: 8px;
+      font-size: 13px;
       border: none;
       border-radius: 20px;
       font-weight: bold;
@@ -46,45 +52,28 @@
       background: rgba(255, 255, 255, 0.85);
       border: 1px solid #999;
       border-radius: 10px;
-      padding: 10px;
-      font-size: 14px;
+      padding: 6px 10px;
+      font-size: 13px;
       display: none;
       white-space: pre-line;
       z-index: 15;
     }
 
     #helpBox {
-      bottom: 100px;
-      right: 10px;
-      width: 180px;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 58%;
+      width: auto;
+      max-width: 90%;
+      text-align: center;
     }
 
     .mensaje {
-      top: 100px;
       left: 50%;
-      transform: translateX(100px);
-      max-width: 220px;
-    }
-
-    @media (max-width: 768px) {
-      .botonera {
-        flex-direction: row;
-        flex-wrap: wrap;
-        bottom: 10px;
-        top: unset;
-        right: unset;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: rgba(250,240,220,0.95);
-        padding: 10px;
-        border-radius: 10px;
-      }
-
-      .btn {
-        width: 80px;
-        padding: 8px;
-        font-size: 12px;
-      }
+      transform: translateX(-50%);
+      top: 28%;
+      max-width: 80%;
+      text-align: center;
     }
   </style>
 </head>
@@ -99,6 +88,8 @@
   <div id="helpBox"></div>
   <div id="mensajeAyuda" class="mensaje"></div>
   <script>
+    const FAVORITE_SLOTS = 6; // reducido
+    const RADIUS_RATIO = 0.055; // agrandado 10-20%
     const mensajesGuia = [
       "\u00a1Bienvenido al Juego de Colores!",
       "Arrastr\u00e1 los colores desde los c\u00edrculos de arriba al vaso mezclador.",
@@ -147,37 +138,36 @@
     let favoritosPos = [];
     let trash = {};
 
-    function resizeCanvas() {
+        function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       width = canvas.width;
       height = canvas.height;
-      RADIUS = Math.min(width, height) * 0.045;
+      RADIUS = Math.min(width, height) * RADIUS_RATIO;
 
       circulosColor = [
-        { x: width * 0.1, y: height * 0.15, name: "red" },
-        { x: width * 0.25, y: height * 0.15, name: "green" },
-        { x: width * 0.4, y: height * 0.15, name: "blue" },
-        { x: width * 0.55, y: height * 0.15, name: "white" },
-        { x: width * 0.7, y: height * 0.15, name: "black" },
+        { x: width * 0.15, y: height * 0.23, name: "red" },
+        { x: width * 0.32, y: height * 0.23, name: "green" },
+        { x: width * 0.49, y: height * 0.23, name: "blue" },
+        { x: width * 0.66, y: height * 0.23, name: "white" },
+        { x: width * 0.83, y: height * 0.23, name: "black" },
       ];
 
       mezclador = {
         x: width * 0.3,
-        y: height * 0.45,
+        y: height * 0.53,
         color: mezclador ? mezclador.color : [0, 0, 0]
       };
 
       favoritosPos = Array.from({ length: FAVORITE_SLOTS }, (_, i) => ({
-        x: width * 0.07 + i * width * 0.085,
-        y: height * 0.85
+        x: width * 0.14 + i * width * 0.13,
+        y: height * 0.9
       }));
 
-      trash = { x: width * 0.9, y: height * 0.85 };
-
+      trash = { x: width * 0.9, y: height * 0.9 };
       draw();
     }
-
+ 
     function drawCircle(x, y, color, label = "") {
       ctx.beginPath();
       ctx.arc(x, y, RADIUS, 0, Math.PI * 2);
