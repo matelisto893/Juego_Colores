@@ -21,24 +21,25 @@
   }
 
   .botonera {
-    position: fixed;
+    position: absolute;
     display: flex;
     flex-direction: row;
     justify-content: center;
-    flex-wrap: wrap;
-    top: 55px;
+    align-items: center;
+    top: 9vh;
     left: 50%;
     transform: translateX(-50%);
     gap: 8px;
     z-index: 10;
     background-color: rgba(250,240,220,0.95);
-    padding: 8px;
+    padding: 8px 10px;
     border-radius: 10px;
+    flex-wrap: wrap;
     max-width: 95vw;
   }
 
   .btn {
-    width: 80px;
+    width: 85px;
     padding: 6px;
     font-size: 12px;
     border: none;
@@ -72,20 +73,22 @@
   .mensaje {
     left: 50%;
     transform: translateX(-50%);
-    top: 28%;
+    top: 30%;
     max-width: 80%;
     text-align: center;
   }
 
-  /* 📱 Móviles muy pequeños */
-  @media (max-width: 480px) {
+  @media (max-width: 600px) {
     .btn {
-      width: 70px;
+      width: 75px;
       font-size: 11px;
       padding: 5px;
     }
+
     .botonera {
+      top: 8vh;
       gap: 6px;
+      padding: 6px 8px;
     }
   }
 </style>
