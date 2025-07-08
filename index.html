@@ -295,6 +295,7 @@
     }
 
     function handleEnd(evt) {
+  evt.preventDefault();
   if (!dragging) return;
 
   let x, y;
@@ -326,6 +327,9 @@
 
   dragging = null;
   draggingFromMixer = false;
+  document.body.addEventListener("touchstart", function(e) {
+  if (e.target === canvas) e.preventDefault();
+}, { passive: false });
   draw();
 }
 
