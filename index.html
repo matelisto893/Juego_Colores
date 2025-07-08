@@ -21,22 +21,22 @@
   }
 
   .botonera {
-    position: absolute;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    top: 9vh;
-    left: 50%;
-    transform: translateX(-50%);
-    gap: 8px;
-    z-index: 10;
-    background-color: rgba(250,240,220,0.95);
-    padding: 8px 10px;
-    border-radius: 10px;
-    flex-wrap: wrap;
-    max-width: 95vw;
-  }
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  top: 8vh;
+  left: 50%;
+  transform: translateX(-50%);
+  gap: 8px;
+  z-index: 10;
+  background-color: rgba(250,240,220,0.95);
+  padding: 8px 10px;
+  border-radius: 10px;
+  flex-wrap: wrap;
+  max-width: 95vw;
+}
 
   .btn {
     width: 85px;
@@ -79,18 +79,26 @@
   }
 
   @media (max-width: 600px) {
-    .btn {
-      width: 75px;
-      font-size: 11px;
-      padding: 5px;
-    }
-
-    .botonera {
-      top: 8vh;
-      gap: 6px;
-      padding: 6px 8px;
-    }
+  .btn {
+    width: 75px;
+    font-size: 11px;
+    padding: 5px;
   }
+
+  .botonera {
+    top: 9vh; /* subimos un poquito más para que no tape círculos */
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .mensaje {
+    top: 23%;
+  }
+
+  #helpBox {
+    top: 60%;
+  }
+}
 </style>
 </head>
 <body>
@@ -202,7 +210,8 @@
       ctx.clearRect(0, 0, width, height);
       ctx.fillStyle = "#B400FF";
       ctx.font = `bold ${RADIUS * 1.2}px sans-serif`;
-      ctx.fillText("Juego de Colores - by @Martín_M", width * 0.2, height * 0.05);
+      ctx.textAlign = "center";
+      ctx.fillText("Juego de Colores - by @Martín_M", width / 2, height * 0.05);
 
       circulosColor.forEach(c => drawCircle(c.x, c.y, COLORS[c.name]));
       drawCircle(mezclador.x, mezclador.y, mezclador.color, "Mezcla");
@@ -214,9 +223,10 @@
       if (dragging) drawCircle(dragging.x, dragging.y, dragging.color);
 
       if (objetivo && isSimilar(mezclador.color, objetivo.rgb)) {
-        ctx.fillStyle = "limegreen";
-        ctx.font = `bold ${RADIUS * 1.2}px sans-serif`;
-        ctx.fillText("¡DESAFÍO LOGRADO!", width * 0.25, height * 0.62);
+  ctx.fillStyle = "limegreen";
+  ctx.font = `bold ${RADIUS * 1.2}px sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillText("¡DESAFÍO LOGRADO!", width / 2, mezclador.y - RADIUS * 2.2);
       }
     }
     
